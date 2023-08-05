@@ -2,20 +2,21 @@ use accesskit::{Node, NodeBuilder, NodeClassSet, Rect};
 use slotmap::{DefaultKey, SlotMap};
 use taffy::{prelude::Layout, style::Style, Taffy};
 
-pub struct Element {
+pub struct Element<T> {
     node_builder: NodeBuilder,
     layout: Layout,
     children: Vec<DefaultKey>,
+    pub data: T
 }
 
-pub struct Tree {
+pub struct Tree<T> {
     taffy: Taffy,
-    elements: SlotMap<DefaultKey, Element>,
+    elements: SlotMap<DefaultKey, Element<T>>,
     classes: NodeClassSet,
     root: DefaultKey,
 }
 
-impl Tree {
+impl<T> Tree<T> {
     pub fn update_style(&mut self, key: DefaultKey, style: Style) {
         self.taffy.set_style(key, style).unwrap();
     }
@@ -44,7 +45,7 @@ impl Tree {
         }
     }
 
-    pub fn visit_mut(&mut self, visitor: &mut impl VisitMut) {
+    pub fn visit_mut(&mut self, visitor: &mut impl VisitMut<T>) {
         let mut keys = vec![self.root];
         while let Some(key) = keys.pop() {
             let element = self.elements.get_mut(key).unwrap();
@@ -54,6 +55,6 @@ impl Tree {
     }
 }
 
-pub trait VisitMut {
-    fn visit_element(&mut self, element: &mut Element);
+pub trait VisitMut<T> {
+    fn visit_element(&mut self, element: &mut Element<T>);
 }
