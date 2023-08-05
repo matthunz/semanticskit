@@ -1,18 +1,18 @@
-use std::collections::HashMap;
-
-use accesskit::{Node, NodeBuilder, NodeClassSet, Rect, TreeUpdate};
+use accesskit::{Node, NodeBuilder, NodeClassSet, Rect};
 use slotmap::{DefaultKey, SlotMap};
 use taffy::{prelude::Layout, style::Style, Taffy};
 
 pub struct Element {
     node_builder: NodeBuilder,
     layout: Layout,
+    children: Vec<DefaultKey>,
 }
 
 pub struct Tree {
     taffy: Taffy,
     elements: SlotMap<DefaultKey, Element>,
     classes: NodeClassSet,
+    root: DefaultKey,
 }
 
 impl Tree {
@@ -43,4 +43,17 @@ impl Tree {
             None
         }
     }
+
+    pub fn visit_mut(&mut self, visitor: &mut impl VisitMut) {
+        let mut keys = vec![self.root];
+        while let Some(key) = keys.pop() {
+            let element = self.elements.get_mut(key).unwrap();
+            visitor.visit_element(element);
+            keys.extend_from_slice(&element.children);
+        }
+    }
+}
+
+pub trait VisitMut {
+    fn visit_element(&mut self, element: &mut Element);
 }
